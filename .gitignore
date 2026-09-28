@@ -26,3 +26,5 @@ Thumbs.db
 /legacy
 # Composer binary
 /composer.phar
+# Cloudflare tunnel binary
+/cloudflared.exe
