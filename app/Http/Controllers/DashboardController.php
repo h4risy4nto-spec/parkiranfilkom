@@ -18,10 +18,63 @@ class DashboardController extends Controller
         $today = Carbon::today();
 
         // Total capacity & used across all active areas
-        $areas = ParkingArea::with(['slots', 'activeTickets'])->where('is_active', true)->get();
+        $areas = ParkingArea::with(['slots' => function ($q) {
+            $q->orderBy('slot_number');
+        }, 'slots.activeTicket', 'activeTickets'])->where('is_active', true)->get();
+
         $totalCapacity = $areas->sum('capacity');
         $totalOccupied = ParkingTicket::where('status', 'active')->count();
         $totalAvailable = max(0, $totalCapacity - $totalOccupied);
+
+        // Prepare structured slots data per area for interactive visual map
+        $areasData = $areas->map(function ($a) {
+            $slotsList = [];
+            $existingSlots = $a->slots->keyBy('slot_number');
+            $prefix = preg_replace('/[^A-Z0-9]/', '', $a->code);
+
+            for ($i = 1; $i <= $a->capacity; $i++) {
+                if (isset($existingSlots[$i])) {
+                    $slot = $existingSlots[$i];
+                    $ticket = $slot->activeTicket;
+                    $slotsList[] = [
+                        'id' => $slot->id,
+                        'slot_number' => $slot->slot_number,
+                        'slot_code' => $slot->slot_code,
+                        'is_occupied' => (bool) $slot->is_occupied,
+                        'plate_number' => $ticket ? $ticket->plate_number : null,
+                        'vehicle_type' => $ticket ? $ticket->vehicle_type : $a->vehicle_type,
+                        'entry_time' => $ticket && $ticket->entry_time ? $ticket->entry_time->format('H:i') : null,
+                        'duration' => $ticket ? $ticket->formatted_duration : null,
+                    ];
+                } else {
+                    $slotsList[] = [
+                        'id' => null,
+                        'slot_number' => $i,
+                        'slot_code' => sprintf('%s-%02d', $prefix ?: 'SLOT', $i),
+                        'is_occupied' => false,
+                        'plate_number' => null,
+                        'vehicle_type' => $a->vehicle_type,
+                        'entry_time' => null,
+                        'duration' => null,
+                    ];
+                }
+            }
+
+            $occupiedCount = collect($slotsList)->where('is_occupied', true)->count();
+            $availableCount = max(0, $a->capacity - $occupiedCount);
+
+            return [
+                'id' => $a->id,
+                'name' => $a->name,
+                'code' => $a->code,
+                'vehicle_type' => $a->vehicle_type,
+                'capacity' => $a->capacity,
+                'occupied_count' => $occupiedCount,
+                'available_count' => $availableCount,
+                'location_description' => $a->location_description,
+                'slots' => $slotsList,
+            ];
+        });
 
         // Today's metrics (No fees or income - campus free parking model)
         $todayInCount = ParkingTicket::whereDate('entry_time', $today)->count();
@@ -47,14 +100,14 @@ class DashboardController extends Controller
         $activeVehicles = ParkingTicket::with(['area', 'slot'])
             ->where('status', 'active')
             ->latest('entry_time')
-            ->take(6)
+            ->take(8)
             ->get();
 
-        // If fewer than 6, get recent tickets to populate table
-        if ($activeVehicles->count() < 6) {
+        // If fewer than 8, get recent tickets to populate table
+        if ($activeVehicles->count() < 8) {
             $recentTickets = ParkingTicket::with(['area', 'slot'])
                 ->latest('entry_time')
-                ->take(6)
+                ->take(8)
                 ->get();
         } else {
             $recentTickets = $activeVehicles;
@@ -62,6 +115,7 @@ class DashboardController extends Controller
 
         return view('dashboard.index', compact(
             'areas',
+            'areasData',
             'totalCapacity',
             'totalOccupied',
             'totalAvailable',
