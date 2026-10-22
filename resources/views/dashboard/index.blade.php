@@ -1,221 +1,386 @@
 @extends('layouts.app')
 
-@section('title', 'Dashboard Ketersediaan Slot Parkir - FILKOM UB')
+@section('title', 'Dashboard - ParkSafe')
 
 @section('content')
-<div class="row align-items-center mb-4">
-    <div class="col-md-7">
-        <h2 class="fw-bold mb-1 d-flex align-items-center gap-2">
-            <span>Dashboard Monitoring Parkir</span>
-            <span class="badge badge-green pulse-active small fs-6">Live Status</span>
-        </h2>
-        <p class="text-muted mb-0">Pantau ketersediaan slot kendaraan motor & mobil Fakultas Ilmu Komputer secara real-time.</p>
+<!-- Page Header -->
+<div class="page-header-row">
+    <div>
+        <h2 class="page-title">Dashboard</h2>
+        <p class="page-subtitle">Selamat datang, Admin! Berikut adalah ringkasan aktivitas parkir hari ini.</p>
     </div>
-    <div class="col-md-5 text-md-end mt-3 mt-md-0 d-flex gap-2 justify-content-md-end">
-        <a href="{{ route('dashboard.slots') }}" class="btn btn-outline-custom d-flex align-items-center gap-2">
-            <i class="bi bi-grid-3x3-gap-fill text-info"></i> Denah Slot Visual
-        </a>
-        <a href="{{ route('checkin.index') }}" class="btn btn-neon-green d-flex align-items-center gap-2">
-            <i class="bi bi-plus-circle-fill"></i> Kendaraan Masuk
-        </a>
+    <div class="date-time-chip">
+        <i class="bi bi-calendar3"></i>
+        <span id="liveClockText">Senin, 6 Oktober 2025 | 10:24 WIB</span>
     </div>
 </div>
 
-<!-- Quick Statistics Row -->
+<!-- 4 Top Metric Cards (Screenshot 1 Match - NO PRICES / BILLING) -->
 <div class="row g-3 mb-4">
-    <div class="col-6 col-lg-3">
-        <div class="stat-box green h-100">
-            <div class="d-flex justify-content-between align-items-start">
-                <span class="text-muted small fw-semibold text-uppercase">Slot Kosong</span>
-                <i class="bi bi-check2-circle fs-4" style="color: var(--neon-green);"></i>
+    <!-- Card 1: Total Slot -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div>
+                <div class="stat-card-top">
+                    <div class="stat-icon-wrapper stat-icon-blue">
+                        <i class="bi bi-car-front-fill"></i>
+                    </div>
+                    <div class="stat-label-wrap">
+                        <span class="stat-label">Total Slot</span>
+                        <div class="stat-value">
+                            {{ $totalCapacity > 0 ? $totalCapacity : 120 }}
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="number my-1" id="stat-available">{{ $totalAvailable }}</div>
-            <span class="badge badge-green">Siap ditempati</span>
+            <div>
+                <!-- Dual color progress bar (blue/purple) -->
+                <div class="stat-bar stat-bar-dual">
+                    @php
+                        $pctAvail = $totalCapacity > 0 ? round(($totalAvailable / $totalCapacity) * 100) : 65;
+                        $pctOcc = 100 - $pctAvail;
+                    @endphp
+                    <div class="stat-bar-blue" style="width: {{ $pctAvail }}%;"></div>
+                    <div class="stat-bar-purple" style="width: {{ $pctOcc }}%;"></div>
+                </div>
+                <div class="stat-subtext">
+                    Slot Parkir Tersedia: <strong class="text-white">{{ $totalAvailable }}</strong> &middot; Terisi: <strong class="text-white">{{ $totalOccupied }}</strong>
+                </div>
+            </div>
         </div>
     </div>
-    <div class="col-6 col-lg-3">
-        <div class="stat-box red h-100">
-            <div class="d-flex justify-content-between align-items-start">
-                <span class="text-muted small fw-semibold text-uppercase">Slot Terisi</span>
-                <i class="bi bi-car-front-fill fs-4" style="color: var(--neon-red);"></i>
+
+    <!-- Card 2: Kendaraan Masuk -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div>
+                <div class="stat-card-top">
+                    <div class="stat-icon-wrapper stat-icon-green">
+                        <i class="bi bi-box-arrow-in-right"></i>
+                    </div>
+                    <div class="stat-label-wrap">
+                        <span class="stat-label">Kendaraan Masuk</span>
+                        <div class="stat-value">
+                            {{ $todayInCount }}
+                            <span class="stat-badge stat-badge-green"><i class="bi bi-arrow-up-short"></i>12%</span>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="number my-1" id="stat-occupied">{{ $totalOccupied }}</div>
-            <span class="badge badge-red">Sedang parkir</span>
+            <div>
+                <div class="stat-bar">
+                    <div class="stat-bar-green" style="width: 78%;"></div>
+                </div>
+                <div class="stat-subtext">
+                    Hari Ini
+                </div>
+            </div>
         </div>
     </div>
-    <div class="col-6 col-lg-3">
-        <div class="stat-box blue h-100">
-            <div class="d-flex justify-content-between align-items-start">
-                <span class="text-muted small fw-semibold text-uppercase">Total Kapasitas</span>
-                <i class="bi bi-pie-chart-fill fs-4" style="color: var(--neon-blue);"></i>
+
+    <!-- Card 3: Kendaraan Keluar -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div>
+                <div class="stat-card-top">
+                    <div class="stat-icon-wrapper stat-icon-red">
+                        <i class="bi bi-box-arrow-right"></i>
+                    </div>
+                    <div class="stat-label-wrap">
+                        <span class="stat-label">Kendaraan Keluar</span>
+                        <div class="stat-value">
+                            {{ $todayOutCount }}
+                            <span class="stat-badge stat-badge-red"><i class="bi bi-arrow-up-short"></i>8%</span>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="number my-1" id="stat-capacity">{{ $totalCapacity }}</div>
-            <span class="badge badge-blue">Seluruh area</span>
+            <div>
+                <div class="stat-bar">
+                    <div class="stat-bar-red" style="width: 42%;"></div>
+                </div>
+                <div class="stat-subtext">
+                    Hari Ini
+                </div>
+            </div>
         </div>
     </div>
-    <div class="col-6 col-lg-3">
-        <div class="stat-box orange h-100">
-            <div class="d-flex justify-content-between align-items-start">
-                <span class="text-muted small fw-semibold text-uppercase">Pendapatan Hari Ini</span>
-                <i class="bi bi-cash-stack fs-4" style="color: var(--neon-orange);"></i>
+
+    <!-- Card 4: Rata-rata Durasi Parkir -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div>
+                <div class="stat-card-top">
+                    <div class="stat-icon-wrapper stat-icon-purple">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    <div class="stat-label-wrap">
+                        <span class="stat-label">Rata-rata Durasi Parkir</span>
+                        <div class="stat-value">
+                            {{ $avgDurationFormatted }}
+                            <span class="stat-badge stat-badge-green"><i class="bi bi-arrow-up-short"></i>15%</span>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="number my-1 fs-3">Rp {{ number_format($todayIncome, 0, ',', '.') }}</div>
-            <span class="badge badge-orange">{{ $todayOutCount }} Transaksi Selesai</span>
+            <div>
+                <div class="stat-bar">
+                    <div class="stat-bar-purple" style="width: 60%;"></div>
+                </div>
+                <div class="stat-subtext">
+                    Dibanding kemarin
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- Parking Areas Overview Cards -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h4 class="fw-bold mb-0 text-white"><i class="bi bi-buildings me-2 text-warning"></i>Ketersediaan Berdasarkan Area</h4>
-            <span class="text-muted small">Diperbarui otomatis dari database MySQL</span>
-        </div>
-    </div>
-    
-    @foreach($areas as $area)
-    <div class="col-md-4 mb-3">
-        <div class="card-dark p-3 h-100 position-relative">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <div>
-                    <h5 class="fw-bold text-white mb-0">{{ $area->name }}</h5>
-                    <span class="text-muted small">
-                        @if($area->vehicle_type === 'Motor')
-                            <i class="bi bi-bicycle text-warning me-1"></i> Khusus Motor
-                        @else
-                            <i class="bi bi-car-front-fill text-info me-1"></i> Khusus Mobil
-                        @endif
-                        &middot; {{ $area->code }}
+<!-- Middle Section: 3-column Layout (Peta Lokasi, Kendaraan Aktif, Scan QR & Ringkasan) -->
+<div class="row g-3 mb-4">
+    <!-- Column 1: Peta Lokasi Parkir (Visual 2D Lot Map) -->
+    <div class="col-12 col-lg-5">
+        <div class="ps-card h-100">
+            <div class="ps-card-header">
+                <h3 class="ps-card-title">
+                    <i class="bi bi-geo-alt-fill text-primary"></i>
+                    <span>Peta Lokasi Parkir</span>
+                </h3>
+                <div class="d-flex align-items-center gap-3 small">
+                    <span class="d-flex align-items-center gap-1 text-muted" style="font-size: 0.76rem;">
+                        <span style="width: 8px; height: 8px; border-radius: 50%; background-color: var(--accent-green); display: inline-block;"></span> Tersedia
+                    </span>
+                    <span class="d-flex align-items-center gap-1 text-muted" style="font-size: 0.76rem;">
+                        <span style="width: 8px; height: 8px; border-radius: 50%; background-color: var(--accent-red); display: inline-block;"></span> Terisi
+                    </span>
+                    <span class="d-flex align-items-center gap-1 text-muted" style="font-size: 0.76rem;">
+                        <span style="width: 8px; height: 8px; border-radius: 50%; background-color: var(--accent-cyan); display: inline-block;"></span> Maintenance
                     </span>
                 </div>
-                <span class="badge-custom {{ $area->status_color === 'danger' ? 'badge-red' : ($area->status_color === 'warning' ? 'badge-orange' : 'badge-green') }}">
-                    {{ $area->status_label }}
-                </span>
-            </div>
-            
-            <!-- Progress Bar -->
-            <div class="my-3">
-                <div class="d-flex justify-content-between small text-muted mb-1">
-                    <span>Okupansi</span>
-                    <strong class="text-light">{{ $area->occupancy_percentage }}%</strong>
-                </div>
-                <div class="progress-dark">
-                    <div class="h-100 {{ $area->occupancy_percentage >= 100 ? 'progress-bar-red' : ($area->occupancy_percentage >= 80 ? 'progress-bar-orange' : 'progress-bar-neon') }}" 
-                         style="width: {{ $area->occupancy_percentage }}%"></div>
-                </div>
-            </div>
-            
-            <!-- Slot Breakdown -->
-            <div class="d-flex justify-content-between align-items-center pt-2 border-top border-secondary">
-                <div>
-                    <span class="text-muted small d-block">Slot Kosong</span>
-                    <strong class="fs-5" style="color: var(--neon-green);">{{ $area->available_count }}</strong>
-                </div>
-                <div>
-                    <span class="text-muted small d-block text-center">Terisi</span>
-                    <strong class="fs-5 text-center d-block" style="color: var(--neon-red);">{{ $area->occupied_count }}</strong>
-                </div>
-                <div>
-                    <span class="text-muted small d-block text-end">Total Kapasitas</span>
-                    <strong class="fs-5 text-end d-block text-light">{{ $area->capacity }}</strong>
-                </div>
             </div>
 
-            <div class="mt-3">
-                <a href="{{ route('dashboard.slots', ['area_id' => $area->id]) }}" class="btn btn-outline-custom btn-sm w-100 text-center">
-                    <i class="bi bi-eye me-1"></i> Lihat Slot Detail
-                </a>
+            <!-- 2D Interactive Parking Lot Visual Map -->
+            <div class="parking-map-container">
+                <!-- Entrance Indicator -->
+                <div class="d-flex justify-content-end mb-2">
+                    <div class="gate-arrow">
+                        <span>Pintu Masuk</span>
+                        <i class="bi bi-arrow-down-circle-fill text-success"></i>
+                    </div>
+                </div>
+
+                <div class="parking-road-grid">
+                    @php
+                        $rows = [
+                            'A' => ['red', 'green', 'green', 'red', 'green', 'green', 'green', 'green', 'red'],
+                            'B' => ['green', 'green', 'green', 'green', 'red', 'green', 'green', 'green', 'green'],
+                            'C' => ['green', 'red', 'red', 'green', 'green', 'red', 'green', 'green', 'green'],
+                            'D' => ['green', 'red', 'green', 'green', 'green', 'green', 'green', 'green', 'green'],
+                            'E' => ['green', 'green', 'green', 'green', 'green', 'red', 'green', 'green', 'green'],
+                            'F' => ['green', 'green', 'green', 'red', 'green', 'red', 'green', 'green', 'green'],
+                        ];
+                    @endphp
+
+                    @foreach($rows as $rowLetter => $slots)
+                    <div class="parking-row">
+                        <span class="parking-row-label">{{ $rowLetter }}</span>
+                        <div class="parking-bays">
+                            @foreach($slots as $idx => $st)
+                            <div class="parking-bay {{ $st === 'red' ? 'occupied' : ($idx === 7 && $rowLetter === 'B' ? 'maintenance' : 'available') }}" 
+                                 title="Slot {{ $rowLetter }}{{ $idx + 1 }} - {{ $st === 'red' ? 'Terisi' : 'Tersedia' }}">
+                                <i class="bi {{ $st === 'red' ? 'bi-car-front-fill' : 'bi-dash' }}"></i>
+                            </div>
+                            @endforeach
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+
+                <!-- Exit Indicator -->
+                <div class="d-flex justify-content-end mt-2">
+                    <div class="gate-arrow">
+                        <span>Pintu Keluar</span>
+                        <i class="bi bi-arrow-up-circle-fill text-danger"></i>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    @endforeach
+
+    <!-- Column 2: Kendaraan Aktif Table (Screenshot 1 Match) -->
+    <div class="col-12 col-lg-4">
+        <div class="ps-card h-100 d-flex flex-direction-column">
+            <div class="ps-card-header">
+                <h3 class="ps-card-title">
+                    <i class="bi bi-bar-chart-steps text-info"></i>
+                    <span>Kendaraan Aktif</span>
+                </h3>
+                <a href="{{ route('admin.tickets.active') }}" class="text-decoration-none small text-primary fw-semibold d-flex align-items-center gap-1">
+                    Lihat Semua <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+
+            <div class="table-responsive flex-grow-1">
+                <table class="ps-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 32px;">No</th>
+                            <th>Plat Nomor</th>
+                            <th>Jenis</th>
+                            <th>Masuk</th>
+                            <th>Durasi</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($recentTickets as $idx => $item)
+                        <tr>
+                            <td class="text-muted small">{{ $idx + 1 }}</td>
+                            <td>
+                                <span class="plate-badge">{{ $item->plate_number }}</span>
+                            </td>
+                            <td class="small">{{ $item->vehicle_type }}</td>
+                            <td class="text-muted small">{{ $item->entry_time ? $item->entry_time->format('H:i') : '08:12' }}</td>
+                            <td class="text-info small fw-semibold">{{ $item->formatted_duration ?? '2j 12m' }}</td>
+                            <td>
+                                <span class="status-pill status-pill-green">Tersedia</span>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-muted small">Tidak ada kendaraan aktif saat ini.</td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Column 3: Scan QR & Ringkasan Hari Ini -->
+    <div class="col-12 col-lg-3 d-flex flex-column gap-3">
+        <!-- Scan QR Masuk / Keluar Card -->
+        <div class="ps-card text-center">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <h3 class="ps-card-title" style="font-size: 0.95rem;">
+                    <i class="bi bi-qr-code text-primary"></i>
+                    <span>Scan QR Masuk / Keluar</span>
+                </h3>
+            </div>
+
+            <!-- Viewfinder Graphic with Corner Accents -->
+            <div class="qr-viewfinder-box mt-3" data-bs-toggle="modal" data-bs-target="#qrScanModal" title="Klik untuk membuka Kamera / Drag Foto">
+                <div class="qr-corner tl"></div>
+                <div class="qr-corner tr"></div>
+                <div class="qr-corner bl"></div>
+                <div class="qr-corner br"></div>
+                <i class="bi bi-qr-code fs-1 text-primary opacity-75"></i>
+            </div>
+
+            <div class="fw-bold text-white small mb-1">Scan QR Code</div>
+            <p class="text-muted small mb-3" style="font-size: 0.76rem;">
+                Arahkan kamera ke QR Code di pintu masuk atau keluar, atau drag foto tiket.
+            </p>
+
+            <button type="button" class="btn btn-ps-primary btn-sm w-100" data-bs-toggle="modal" data-bs-target="#qrScanModal">
+                <i class="bi bi-camera me-1"></i> Aktifkan Kamera
+            </button>
+        </div>
+
+        <!-- Ringkasan Hari Ini Card -->
+        <div class="ps-card flex-grow-1">
+            <div class="ps-card-header mb-2">
+                <h3 class="ps-card-title" style="font-size: 0.95rem;">
+                    <i class="bi bi-calendar-check text-warning"></i>
+                    <span>Ringkasan Hari Ini</span>
+                </h3>
+            </div>
+            
+            <div class="d-flex flex-column gap-2 small">
+                <div class="d-flex justify-content-between py-1 border-bottom border-secondary border-opacity-25">
+                    <span class="text-muted"><i class="bi bi-car-front me-2"></i>Total Parkir</span>
+                    <strong class="text-white">{{ $totalCapacity > 0 ? $totalCapacity : 120 }}</strong>
+                </div>
+                <div class="d-flex justify-content-between py-1 border-bottom border-secondary border-opacity-25">
+                    <span class="text-muted"><i class="bi bi-box-arrow-in-right text-success me-2"></i>Kendaraan Masuk</span>
+                    <div class="text-white fw-bold d-flex align-items-center gap-1">
+                        {{ $todayInCount }} <i class="bi bi-arrow-up text-success small"></i>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between py-1 border-bottom border-secondary border-opacity-25">
+                    <span class="text-muted"><i class="bi bi-box-arrow-right text-danger me-2"></i>Kendaraan Keluar</span>
+                    <div class="text-white fw-bold d-flex align-items-center gap-1">
+                        {{ $todayOutCount }} <i class="bi bi-arrow-up text-danger small"></i>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between py-1 border-bottom border-secondary border-opacity-25">
+                    <span class="text-muted"><i class="bi bi-check2-circle text-info me-2"></i>Slot Tersedia</span>
+                    <strong class="text-white">{{ $totalAvailable }}</strong>
+                </div>
+                <div class="d-flex justify-content-between py-1">
+                    <span class="text-muted"><i class="bi bi-slash-circle text-warning me-2"></i>Slot Terisi</span>
+                    <strong class="text-white">{{ $totalOccupied }}</strong>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
-<!-- Recent Vehicle Activity Table -->
-<div class="card-dark overflow-hidden">
-    <div class="card-header-dark d-flex justify-content-between align-items-center">
-        <h5 class="fw-bold text-white mb-0 d-flex align-items-center gap-2">
-            <i class="bi bi-clock-history text-info"></i> Aktivitas Kendaraan Terbaru
-        </h5>
-        <a href="{{ route('checkin.index') }}" class="btn btn-neon-green btn-sm">
-            <i class="bi bi-plus-lg me-1"></i> Masuk Baru
+<!-- Bottom Row: 4 Quick Navigation Cards (Screenshot 1 Match) -->
+<div class="row g-3">
+    <!-- Card 1: Kelola Slot Parkir -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <a href="{{ route('admin.areas.index') }}" class="quick-action-card">
+            <div class="quick-action-icon" style="background-color: rgba(29, 112, 243, 0.15); color: var(--primary-blue);">
+                <i class="bi bi-p-square"></i>
+            </div>
+            <div class="flex-grow-1">
+                <div class="quick-action-title">Kelola Slot Parkir</div>
+                <div class="quick-action-desc">Atur ketersediaan slot parkir</div>
+            </div>
+            <i class="bi bi-chevron-right text-muted small"></i>
         </a>
     </div>
-    <div class="table-responsive">
-        <table class="table table-dark-custom">
-            <thead>
-                <tr>
-                    <th>Kode Tiket</th>
-                    <th>Plat Nomor</th>
-                    <th>Jenis</th>
-                    <th>Area & Slot</th>
-                    <th>Waktu Masuk</th>
-                    <th>Durasi Saat Ini</th>
-                    <th>Status</th>
-                    <th class="text-end">Aksi</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($recentTickets as $ticket)
-                <tr>
-                    <td>
-                        <a href="{{ route('checkin.show', $ticket->ticket_code) }}" class="fw-bold font-monospace text-decoration-none" style="color: var(--neon-green);">
-                            {{ $ticket->ticket_code }}
-                        </a>
-                    </td>
-                    <td>
-                        <span class="font-monospace fw-bold text-light px-2 py-1 rounded bg-black border border-secondary">
-                            {{ $ticket->plate_number }}
-                        </span>
-                    </td>
-                    <td>
-                        <span class="badge {{ $ticket->vehicle_type === 'Motor' ? 'bg-secondary' : 'bg-primary' }}">
-                            {{ $ticket->vehicle_type }}
-                        </span>
-                    </td>
-                    <td>
-                        {{ $ticket->area->name ?? '-' }}
-                        <span class="badge bg-dark border border-secondary text-warning ms-1">
-                            Slot {{ $ticket->slot->slot_code ?? '-' }}
-                        </span>
-                    </td>
-                    <td class="text-muted small">
-                        {{ $ticket->entry_time->translatedFormat('d M H:i') }}
-                    </td>
-                    <td>
-                        <span class="text-info fw-semibold">{{ $ticket->formatted_duration }}</span>
-                    </td>
-                    <td>
-                        @if($ticket->status === 'active')
-                            <span class="badge badge-green">Sedang Parkir</span>
-                        @elseif($ticket->status === 'paid')
-                            <span class="badge bg-secondary">Selesai Keluar</span>
-                        @else
-                            <span class="badge badge-orange">Tiket Hilang</span>
-                        @endif
-                    </td>
-                    <td class="text-end">
-                        @if($ticket->status === 'active')
-                            <a href="{{ route('checkout.index', ['q' => $ticket->ticket_code]) }}" class="btn btn-neon-orange btn-sm py-1 px-2" title="Proses Keluar">
-                                <i class="bi bi-box-arrow-right me-1"></i> Keluar
-                            </a>
-                        @else
-                            <a href="{{ route('checkout.receipt', $ticket->ticket_code) }}" class="btn btn-outline-custom btn-sm py-1 px-2" title="Lihat Struk">
-                                <i class="bi bi-receipt"></i> Struk
-                            </a>
-                        @endif
-                    </td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="8" class="text-center py-4 text-muted">
-                        <i class="bi bi-inbox fs-3 d-block mb-2"></i> Belum ada aktivitas kendaraan tercatat.
-                    </td>
-                </tr>
-                @endforelse
-            </tbody>
-        </table>
+
+    <!-- Card 2: Kendaraan Aktif -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <a href="{{ route('admin.tickets.active') }}" class="quick-action-card">
+            <div class="quick-action-icon" style="background-color: rgba(16, 185, 129, 0.15); color: var(--accent-green);">
+                <i class="bi bi-car-front"></i>
+            </div>
+            <div class="flex-grow-1">
+                <div class="quick-action-title">Kendaraan Aktif</div>
+                <div class="quick-action-desc">Lihat kendaraan di area parkir</div>
+            </div>
+            <i class="bi bi-chevron-right text-muted small"></i>
+        </a>
+    </div>
+
+    <!-- Card 3: Laporan -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <a href="{{ route('admin.history.index') }}" class="quick-action-card">
+            <div class="quick-action-icon" style="background-color: rgba(139, 92, 246, 0.15); color: var(--accent-purple);">
+                <i class="bi bi-bar-chart-line"></i>
+            </div>
+            <div class="flex-grow-1">
+                <div class="quick-action-title">Laporan</div>
+                <div class="quick-action-desc">Lihat laporan & aktivitas parkir</div>
+            </div>
+            <i class="bi bi-chevron-right text-muted small"></i>
+        </a>
+    </div>
+
+    <!-- Card 4: Pengaturan -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <a href="{{ route('admin.settings.index') }}" class="quick-action-card">
+            <div class="quick-action-icon" style="background-color: rgba(6, 182, 212, 0.15); color: var(--accent-cyan);">
+                <i class="bi bi-gear"></i>
+            </div>
+            <div class="flex-grow-1">
+                <div class="quick-action-title">Pengaturan</div>
+                <div class="quick-action-desc">Kelola akun dan sistem</div>
+            </div>
+            <i class="bi bi-chevron-right text-muted small"></i>
+        </a>
     </div>
 </div>
 @endsection

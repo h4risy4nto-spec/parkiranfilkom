@@ -96,7 +96,7 @@
         <h2>UNIVERSITAS BRAWIJAYA</h2>
         <h3>FAKULTAS ILMU KOMPUTER</h3>
         <p>Gedung FILKOM UB, Jl. Veteran No. 8, Malang 65145 | Telp: (0341) 577911 | filkom.ub.ac.id</p>
-        <p><strong>LAPORAN REKAPITULASI PENDAPATAN & TRANSAKSI PARKIR</strong></p>
+        <p><strong>LAPORAN REKAPITULASI AKTIVITAS & TRANSAKSI PARKIR</strong></p>
     </div>
 
     <div class="meta-box">
@@ -121,7 +121,7 @@
                 <th>Waktu Masuk</th>
                 <th>Waktu Keluar</th>
                 <th>Durasi</th>
-                <th class="text-right">Biaya (Rp)</th>
+                <th>Status Validasi</th>
             </tr>
         </thead>
         <tbody>
@@ -135,7 +135,7 @@
                 <td>{{ $r->entry_time->format('d/m/Y H:i') }}</td>
                 <td>{{ $r->exit_time ? $r->exit_time->format('d/m/Y H:i') : '-' }}</td>
                 <td>{{ $r->formatted_duration }}</td>
-                <td class="text-right">{{ number_format($r->total_amount, 0, ',', '.') }}</td>
+                <td><span style="color: green; font-weight: bold;">Selesai (Bebas Biaya)</span></td>
             </tr>
             @empty
             <tr>
@@ -150,9 +150,17 @@
             <span>Total Kendaraan Keluar:</span>
             <strong>{{ $totalCount }} unit</strong>
         </div>
-        <div class="summary-row" style="font-size: 14px; border-top: 1px solid #333; padding-top: 4px; margin-top: 4px;">
-            <span>TOTAL PENDAPATAN:</span>
-            <strong>Rp {{ number_format($totalRevenue, 0, ',', '.') }}</strong>
+        <div class="summary-row">
+            <span>Mobil:</span>
+            <strong>{{ $totalMobil }} unit</strong>
+        </div>
+        <div class="summary-row">
+            <span>Motor:</span>
+            <strong>{{ $totalMotor }} unit</strong>
+        </div>
+        <div class="summary-row" style="border-top: 1px solid #333; padding-top: 4px; margin-top: 4px;">
+            <span>Sistem Tarif:</span>
+            <strong>Gratis (Fasilitas Kampus)</strong>
         </div>
     </div>
 

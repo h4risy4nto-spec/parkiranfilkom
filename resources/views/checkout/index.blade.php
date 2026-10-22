@@ -1,301 +1,253 @@
 @extends('layouts.app')
 
-@section('title', 'Kendaraan Keluar & Scan QR Code - FILKOM UB')
+@section('title', 'Kendaraan Keluar & Scan QR - ParkSafe')
 
 @section('content')
-<div class="row mb-4">
-    <div class="col-12">
-        <h2 class="fw-bold mb-1 d-flex align-items-center gap-2">
-            <span>Pemindaian QR & Kendaraan Keluar</span>
-            <span class="badge badge-orange small fs-6">Gerbang Keluar</span>
-        </h2>
-        <p class="text-muted mb-0">Pindai QR Code tiket menggunakan kamera scanner atau cari berdasarkan plat nomor / kode tiket untuk kalkulasi tarif dan konfirmasi keluar.</p>
+<!-- Page Header -->
+<div class="d-flex align-items-center gap-3 mb-4">
+    <div class="stat-icon-wrapper stat-icon-blue" style="width: 42px; height: 42px; border-radius: 10px;">
+        <i class="bi bi-qr-code-scan"></i>
+    </div>
+    <div>
+        <h2 class="page-title mb-1" style="font-size: 1.55rem;">Pintu Keluar & Scanner QR</h2>
+        <p class="page-subtitle">Pindai QR Code tiket menggunakan kamera, drag & drop foto, atau cari berdasarkan plat nomor / kode tiket.</p>
     </div>
 </div>
 
 <div class="row g-4">
     <!-- Scanner & Search Column -->
-    <div class="col-lg-6">
-        <!-- Search Input -->
-        <div class="card-dark p-4 mb-4">
-            <h5 class="fw-bold text-white mb-3 d-flex align-items-center gap-2">
-                <i class="bi bi-search text-warning"></i> Cari Tiket Parkir
-            </h5>
+    <div class="col-12 col-lg-6">
+        <!-- Search Input Card -->
+        <div class="ps-card mb-4">
+            <h3 class="ps-card-title mb-3" style="font-size: 1rem;">
+                <i class="bi bi-search text-primary"></i> Cari Plat Nomor / Kode Tiket
+            </h3>
             
             <form action="{{ route('checkout.index') }}" method="GET" class="d-flex gap-2">
                 <input type="text" 
                        name="q" 
-                       id="searchQuery" 
-                       class="form-control form-control-dark font-monospace text-uppercase fw-bold" 
-                       placeholder="Contoh: TKT-20260928-ABCD atau N 1234 AB" 
+                       id="checkoutSearchInput" 
+                       class="form-control-ps font-monospace text-uppercase fw-bold" 
+                       placeholder="Contoh: B 1234 KZ atau TKT-..." 
                        value="{{ $query ?? '' }}" 
                        required 
                        autofocus>
-                <button type="submit" class="btn btn-neon-green d-flex align-items-center gap-1 text-nowrap">
+                <button type="submit" class="btn btn-ps-primary text-nowrap">
                     <i class="bi bi-arrow-right"></i> Periksa
                 </button>
             </form>
-            <small class="text-muted mt-2 d-block">Masukkan kode tiket atau plat nomor kendaraan yang sedang aktif parkir.</small>
+            <small class="text-muted mt-2 d-block">Ketikkan nomor plat atau kode tiket kendaraan yang akan keluar.</small>
         </div>
 
-        <!-- Camera QR Code Scanner -->
-        <div class="card-dark p-4">
+        <!-- Camera & Drag-and-Drop QR Code Scanner -->
+        <div class="ps-card">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="fw-bold text-white mb-0 d-flex align-items-center gap-2">
-                    <i class="bi bi-camera-fill text-info"></i> Scanner QR Kamera
-                </h5>
-                <button type="button" id="toggleScannerBtn" class="btn btn-outline-custom btn-sm">
-                    <i class="bi bi-power me-1"></i> Nyalakan Kamera
+                <h3 class="ps-card-title mb-0" style="font-size: 1rem;">
+                    <i class="bi bi-camera text-info"></i> Scanner QR Code
+                </h3>
+                <button type="button" id="btnLocalCamera" class="btn btn-ps-primary btn-sm" onclick="toggleCheckoutCamera()">
+                    <i class="bi bi-camera me-1"></i> <span id="localCameraLabel">Nyalakan Kamera</span>
                 </button>
             </div>
             
-            <div id="scannerWrapper" style="display: none;">
-                <div id="qr-reader" class="mb-3"></div>
-                <div id="scannerStatus" class="alert alert-dark small py-2 text-center text-muted mb-0">
-                    Arahkan kamera ke QR Code pada tiket fisik atau layar ponsel...
+            <!-- Live Camera Viewport -->
+            <div id="checkoutCameraWrapper" style="display: none;" class="mb-3">
+                <div id="checkout-qr-reader" class="rounded overflow-hidden" style="background: #000;"></div>
+                <div id="checkoutCameraStatus" class="alert alert-dark small py-2 text-center text-muted mb-0 mt-2" style="background: rgba(255,255,255,0.05); border: none;">
+                    Arahkan kamera ke QR Code tiket fisik atau layar ponsel...
                 </div>
             </div>
-            
-            <div id="scannerPlaceholder" class="p-4 text-center border border-secondary rounded" style="background: rgba(0,0,0,0.3);">
-                <i class="bi bi-qr-code-scan fs-1 d-block text-muted mb-2"></i>
-                <p class="text-muted small mb-0">Kamera scanner dalam posisi nonaktif. Klik tombol <strong>Nyalakan Kamera</strong> di atas untuk mengaktifkan pemindai langsung dari webcam atau kamera smartphone.</p>
+
+            <!-- Drag & Drop Zone for QR Photo -->
+            <div class="qr-dropzone mb-2" id="checkoutDropzone" onclick="document.getElementById('checkoutQrFileInput').click()">
+                <i class="bi bi-cloud-arrow-up fs-1 d-block text-primary mb-2"></i>
+                <strong class="d-block text-white mb-1">Tarik & Lepas Foto QR di Sini</strong>
+                <span class="text-muted small">atau <span class="text-primary text-decoration-underline">Klik untuk Unggah Gambar Tiket</span> (JPG, PNG, WebP)</span>
+                <input type="file" id="checkoutQrFileInput" accept="image/*" style="display: none;" onchange="handleCheckoutFileSelect(this)">
             </div>
+            <div id="checkoutFileStatus" class="small text-center text-muted"></div>
         </div>
     </div>
 
-    <!-- Ticket Detail & Payment Confirmation Column -->
-    <div class="col-lg-6">
-        @if($foundTicket && $feeDetails)
-            <div class="card-dark p-4 border-warning shadow-lg">
-                <div class="d-flex justify-content-between align-items-start border-bottom border-secondary pb-3 mb-3">
+    <!-- Ticket Detail & Exit Confirmation Column (NO FEES / NO PRICES) -->
+    <div class="col-12 col-lg-6">
+        @if($foundTicket)
+            <div class="ps-card shadow-lg" style="border-color: var(--primary-blue);">
+                <div class="d-flex justify-content-between align-items-start border-bottom border-secondary border-opacity-25 pb-3 mb-3">
                     <div>
-                        <span class="badge badge-green mb-1">Tiket Ditemukan</span>
-                        <h4 class="fw-bold text-white font-monospace mb-0">{{ $foundTicket->ticket_code }}</h4>
+                        <span class="status-pill status-pill-green mb-1">Tiket Ditemukan &bull; Aktif</span>
+                        <h4 class="fw-bold text-white font-monospace mb-0" style="letter-spacing: 0.5px;">{{ $foundTicket->ticket_code }}</h4>
                     </div>
-                    <span class="badge {{ $foundTicket->vehicle_type === 'Motor' ? 'bg-secondary' : 'bg-primary' }} fs-6">
+                    <span class="badge" style="background: rgba(29, 112, 243, 0.2); color: var(--primary-blue); border: 1px solid var(--primary-blue); font-size: 0.85rem;">
                         {{ $foundTicket->vehicle_type }}
                     </span>
                 </div>
 
-                <!-- Big Plate Display -->
-                <div class="text-center my-3">
-                    <span class="ticket-plate">
+                <!-- License Plate Card -->
+                <div class="text-center my-3 p-3 rounded-3" style="background: rgba(0,0,0,0.4); border: 1px solid var(--border-color);">
+                    <span class="font-monospace fw-bold text-white fs-3 letter-spacing-1">
                         {{ $foundTicket->plate_number }}
                     </span>
                 </div>
 
-                <!-- Timing and Duration -->
-                <div class="row g-2 text-muted small my-3 p-3 rounded" style="background: #090d13;">
-                    <div class="col-6">
-                        <span>Waktu Masuk:</span>
-                        <strong class="d-block text-white">{{ $foundTicket->entry_time->translatedFormat('d M Y - H:i') }}</strong>
+                <!-- Timing & Location Info (Campus Free Model) -->
+                <div class="d-flex flex-column gap-2 small py-2 mb-4">
+                    <div class="d-flex justify-content-between py-2 border-bottom border-secondary border-opacity-25">
+                        <span class="text-muted d-flex align-items-center gap-2"><i class="bi bi-box-arrow-in-right text-success"></i> Waktu Masuk:</span>
+                        <strong class="text-white">{{ $foundTicket->entry_time ? $foundTicket->entry_time->translatedFormat('d M Y - H:i') : '-' }}</strong>
                     </div>
-                    <div class="col-6 text-end">
-                        <span>Waktu Sekarang (Keluar):</span>
-                        <strong class="d-block text-white">{{ now()->translatedFormat('d M Y - H:i') }}</strong>
+                    <div class="d-flex justify-content-between py-2 border-bottom border-secondary border-opacity-25">
+                        <span class="text-muted d-flex align-items-center gap-2"><i class="bi bi-box-arrow-right text-danger"></i> Waktu Sekarang (Keluar):</span>
+                        <strong class="text-white">{{ now()->translatedFormat('d M Y - H:i') }}</strong>
                     </div>
-                    <div class="col-6 mt-2 pt-2 border-top border-secondary">
-                        <span>Lokasi Parkir:</span>
-                        <strong class="d-block text-info">{{ $foundTicket->area->name ?? '-' }} (Slot {{ $foundTicket->slot->slot_code ?? '-' }})</strong>
+                    <div class="d-flex justify-content-between py-2 border-bottom border-secondary border-opacity-25">
+                        <span class="text-muted d-flex align-items-center gap-2"><i class="bi bi-hourglass-split text-info"></i> Durasi Parkir:</span>
+                        <strong class="text-info fs-6">{{ $foundTicket->formatted_duration }}</strong>
                     </div>
-                    <div class="col-6 mt-2 pt-2 border-top border-secondary text-end">
-                        <span>Durasi Parkir:</span>
-                        <strong class="d-block text-warning fs-6">{{ $foundTicket->formatted_duration }} ({{ $feeDetails['hours'] }} jam terhitung)</strong>
+                    <div class="d-flex justify-content-between py-2 border-bottom border-secondary border-opacity-25">
+                        <span class="text-muted d-flex align-items-center gap-2"><i class="bi bi-geo-alt text-primary"></i> Area & Slot:</span>
+                        <strong class="text-white">{{ $foundTicket->area->name ?? '-' }} (Slot {{ $foundTicket->slot->slot_code ?? '-' }})</strong>
                     </div>
-                </div>
-
-                <!-- Fee Breakdown -->
-                <div class="p-3 rounded mb-3" style="background: rgba(255, 132, 0, 0.08); border: 1px solid rgba(255, 132, 0, 0.3);">
-                    <div class="d-flex justify-content-between mb-1">
-                        <span class="text-muted">Tarif Dasar ({{ $feeDetails['hours'] }} jam &times; Rp {{ number_format($feeDetails['hourly_rate'], 0, ',', '.') }}):</span>
-                        <strong class="text-light">Rp {{ number_format($feeDetails['base_fee'], 0, ',', '.') }}</strong>
-                    </div>
-                    @if(request()->boolean('is_lost'))
-                    <div class="d-flex justify-content-between mb-1 text-danger">
-                        <span>Denda Tiket Hilang:</span>
-                        <strong>+ Rp {{ number_format($feeDetails['penalty'], 0, ',', '.') }}</strong>
-                    </div>
-                    @endif
-                    <div class="d-flex justify-content-between pt-2 border-top border-secondary align-items-center">
-                        <span class="fs-5 fw-bold text-white">TOTAL BIAYA:</span>
-                        <strong class="fs-2 fw-bold font-monospace" style="color: var(--neon-orange);">
-                            Rp {{ number_format($feeDetails['total_fee'], 0, ',', '.') }}
-                        </strong>
+                    <div class="d-flex justify-content-between py-2">
+                        <span class="text-muted d-flex align-items-center gap-2"><i class="bi bi-shield-check text-success"></i> Biaya Parkir:</span>
+                        <span class="status-pill status-pill-green">Gratis (Parkir Kampus)</span>
                     </div>
                 </div>
 
-                <!-- Form Konfirmasi Keluar -->
+                <!-- Exit Process Form -->
                 <form action="{{ route('checkout.process') }}" method="POST">
                     @csrf
                     <input type="hidden" name="ticket_code" value="{{ $foundTicket->ticket_code }}">
-                    
-                    <div class="form-check form-switch mb-3">
-                        <input class="form-check-input" type="checkbox" name="is_lost" id="is_lost" value="1" {{ request()->boolean('is_lost') ? 'checked' : '' }} onchange="toggleLost(this)">
-                        <label class="form-check-label text-warning small fw-semibold" for="is_lost">
-                            Tiket Fisik Hilang? (Terapkan Denda Tambahan)
-                        </label>
-                    </div>
 
                     <div class="mb-3">
-                        <input type="text" name="notes" class="form-control form-control-dark form-control-sm" placeholder="Catatan opsional (misal: pembayaran tunai / QRIS)">
+                        <label class="form-label text-muted small mb-1">Catatan Gerbang Keluar (Opsional)</label>
+                        <input type="text" name="notes" class="form-control-ps form-control-sm" placeholder="Contoh: Mahasiswa / Dosen / Tamu Fakultas">
                     </div>
 
-                    <button type="submit" class="btn btn-neon-orange btn-lg w-100 fw-bold d-flex justify-content-center align-items-center gap-2 py-3 shadow">
-                        <i class="bi bi-check-circle-fill fs-4"></i>
-                        <span>KONFIRMASI PEMBAYARAN & BUKA GERBANG</span>
+                    <button type="submit" class="btn btn-ps-primary btn-lg w-100 py-3 fw-bold d-flex align-items-center justify-content-center gap-2">
+                        <i class="bi bi-check2-circle fs-5"></i> KONFIRMASI KENDARAAN KELUAR
                     </button>
                 </form>
             </div>
-        @elseif($query)
-            <div class="card-dark p-4 text-center border-danger">
-                <i class="bi bi-exclamation-circle text-danger fs-1 mb-2 d-block"></i>
-                <h5 class="fw-bold text-white">Tiket Aktif Tidak Ditemukan</h5>
-                <p class="text-muted small">Tidak ada kendaraan aktif dengan kode tiket atau plat nomor <strong>"{{ $query }}"</strong>. Pastikan kode atau plat nomor sudah benar, atau kendaraan mungkin sudah keluar sebelumnya.</p>
-                <a href="{{ route('checkout.index') }}" class="btn btn-outline-custom btn-sm">Reset Pencarian</a>
-            </div>
         @else
-            <!-- Waiting State -->
-            <div class="card-dark p-4 text-center h-100 d-flex flex-column justify-content-center align-items-center">
-                <i class="bi bi-qr-code text-muted fs-1 mb-3"></i>
-                <h5 class="fw-bold text-light">Menunggu Pemindaian Tiket</h5>
-                <p class="text-muted small mb-0" style="max-width: 320px;">
-                    Gunakan scanner kamera di sebelah kiri atau ketikkan nomor plat/tiket untuk menampilkan rincian durasi dan tarif parkir.
+            <!-- Placeholder Card -->
+            <div class="ps-card p-5 text-center h-100 d-flex flex-column justify-content-center align-items-center">
+                <div class="stat-icon-wrapper stat-icon-blue mb-3" style="width: 60px; height: 60px; border-radius: 16px; font-size: 1.8rem;">
+                    <i class="bi bi-qr-code"></i>
+                </div>
+                <h4 class="text-white fw-bold mb-1">Menunggu Pemindaian</h4>
+                <p class="text-muted small mb-4" style="max-width: 320px;">
+                    Scan QR Code tiket dengan kamera atau tarik & lepas foto tiket untuk memverifikasi dan mengeluarkan kendaraan.
                 </p>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-ps-primary btn-sm" onclick="toggleCheckoutCamera()">
+                        <i class="bi bi-camera me-1"></i> Nyalakan Kamera
+                    </button>
+                    <button type="button" class="btn btn-ps-outline btn-sm" onclick="document.getElementById('checkoutQrFileInput').click()">
+                        <i class="bi bi-image me-1"></i> Drag / Pilih Foto
+                    </button>
+                </div>
             </div>
         @endif
     </div>
 </div>
 
-<!-- Riwayat Keluar Terakhir -->
-<div class="card-dark mt-4 overflow-hidden">
-    <div class="card-header-dark">
-        <h5 class="fw-bold text-white mb-0 d-flex align-items-center gap-2">
-            <i class="bi bi-clock-history text-success"></i> Transaksi Keluar Terakhir
-        </h5>
-    </div>
-    <div class="table-responsive">
-        <table class="table table-dark-custom">
-            <thead>
-                <tr>
-                    <th>Plat Nomor</th>
-                    <th>Jenis</th>
-                    <th>Area</th>
-                    <th>Waktu Masuk</th>
-                    <th>Waktu Keluar</th>
-                    <th>Durasi</th>
-                    <th>Total Biaya</th>
-                    <th class="text-end">Struk</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($recentCheckouts as $item)
-                <tr>
-                    <td>
-                        <span class="font-monospace fw-bold text-white px-2 py-1 rounded bg-black border border-secondary">
-                            {{ $item->plate_number }}
-                        </span>
-                    </td>
-                    <td>{{ $item->vehicle_type }}</td>
-                    <td>{{ $item->area->name ?? '-' }}</td>
-                    <td class="text-muted small">{{ $item->entry_time->format('d/m H:i') }}</td>
-                    <td class="text-muted small">{{ $item->exit_time ? $item->exit_time->format('d/m H:i') : '-' }}</td>
-                    <td><span class="text-info">{{ $item->formatted_duration }}</span></td>
-                    <td><strong style="color: var(--neon-orange);">Rp {{ number_format($item->total_amount, 0, ',', '.') }}</strong></td>
-                    <td class="text-end">
-                        <a href="{{ route('checkout.receipt', $item->ticket_code) }}" class="btn btn-outline-custom btn-sm py-1 px-2" title="Cetak Struk">
-                            <i class="bi bi-receipt"></i> Struk
-                        </a>
-                    </td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="8" class="text-center py-3 text-muted">Belum ada transaksi keluar hari ini.</td>
-                </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
-</div>
-
 @push('scripts')
-<!-- HTML5-QRCode Scanner Library CDN -->
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
-    let html5QrCode = null;
-    let isScanning = false;
+    let checkoutHtml5Qr = null;
+    let isCheckoutCameraRunning = false;
 
-    const toggleBtn = document.getElementById('toggleScannerBtn');
-    const wrapper = document.getElementById('scannerWrapper');
-    const placeholder = document.getElementById('scannerPlaceholder');
-    const statusText = document.getElementById('scannerStatus');
-
-    toggleBtn.addEventListener('click', function() {
-        if (isScanning) {
-            stopScanner();
+    function toggleCheckoutCamera() {
+        if (isCheckoutCameraRunning) {
+            stopCheckoutCamera();
         } else {
-            startScanner();
+            startCheckoutCamera();
         }
-    });
+    }
 
-    function startScanner() {
+    function startCheckoutCamera() {
+        const wrapper = document.getElementById('checkoutCameraWrapper');
         wrapper.style.display = 'block';
-        placeholder.style.display = 'none';
-        toggleBtn.innerHTML = '<i class="bi bi-stop-circle me-1"></i> Matikan Kamera';
-        toggleBtn.classList.replace('btn-outline-custom', 'btn-danger');
 
-        html5QrCode = new Html5Qrcode("qr-reader");
-        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-
-        html5QrCode.start(
+        if (!checkoutHtml5Qr) {
+            checkoutHtml5Qr = new Html5Qrcode("checkout-qr-reader");
+        }
+        
+        checkoutHtml5Qr.start(
             { facingMode: "environment" },
-            config,
-            (decodedText, decodedResult) => {
-                // Berhasil scan!
-                statusText.className = "alert alert-success small py-2 text-center text-success mb-0";
-                statusText.innerHTML = `<strong>QR Terdeteksi:</strong> ${decodedText}. Memeriksa tiket...`;
-                
-                stopScanner();
-                // Redirect ke URL pencarian
+            { fps: 10, qrbox: { width: 220, height: 220 } },
+            (decodedText) => {
+                stopCheckoutCamera();
                 window.location.href = `{{ route('checkout.index') }}?q=${encodeURIComponent(decodedText)}`;
             },
-            (errorMessage) => {
-                // scan failure, ignore for continuous scanning
-            }
+            (err) => {}
         ).then(() => {
-            isScanning = true;
+            isCheckoutCameraRunning = true;
+            document.getElementById('localCameraLabel').textContent = "Matikan Kamera";
+            document.getElementById('checkoutCameraStatus').textContent = "Kamera aktif. Arahkan QR code ke kotak pemindai...";
         }).catch(err => {
-            statusText.className = "alert alert-danger small py-2 text-center text-danger mb-0";
-            statusText.innerHTML = `Gagal mengakses kamera: ${err}`;
-            stopScanner();
+            console.warn(err);
+            document.getElementById('checkoutCameraStatus').textContent = "Tidak dapat mengakses kamera. Silakan drag/drop foto tiket di bawah.";
         });
     }
 
-    function stopScanner() {
-        if (html5QrCode && isScanning) {
-            html5QrCode.stop().then(() => {
-                html5QrCode.clear();
-                isScanning = false;
-                wrapper.style.display = 'none';
-                placeholder.style.display = 'block';
-                toggleBtn.innerHTML = '<i class="bi bi-power me-1"></i> Nyalakan Kamera';
-                toggleBtn.classList.replace('btn-danger', 'btn-outline-custom');
-            }).catch(err => console.error(err));
-        } else {
-            wrapper.style.display = 'none';
-            placeholder.style.display = 'block';
-            toggleBtn.innerHTML = '<i class="bi bi-power me-1"></i> Nyalakan Kamera';
-            toggleBtn.classList.replace('btn-danger', 'btn-outline-custom');
+    function stopCheckoutCamera() {
+        if (checkoutHtml5Qr && isCheckoutCameraRunning) {
+            checkoutHtml5Qr.stop().then(() => {
+                isCheckoutCameraRunning = false;
+                document.getElementById('localCameraLabel').textContent = "Nyalakan Kamera";
+                document.getElementById('checkoutCameraWrapper').style.display = 'none';
+            }).catch(e => console.error(e));
         }
     }
 
-    function toggleLost(checkbox) {
-        const url = new URL(window.location.href);
-        if (checkbox.checked) {
-            url.searchParams.set('is_lost', '1');
-        } else {
-            url.searchParams.delete('is_lost');
+    // Drag and Drop file handling
+    const checkoutDropzone = document.getElementById('checkoutDropzone');
+    if (checkoutDropzone) {
+        ['dragenter', 'dragover'].forEach(evt => {
+            checkoutDropzone.addEventListener(evt, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                checkoutDropzone.classList.add('drag-active');
+            });
+        });
+        ['dragleave', 'drop'].forEach(evt => {
+            checkoutDropzone.addEventListener(evt, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                checkoutDropzone.classList.remove('drag-active');
+            });
+        });
+        checkoutDropzone.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            if (dt.files && dt.files[0]) {
+                processCheckoutFile(dt.files[0]);
+            }
+        });
+    }
+
+    function handleCheckoutFileSelect(input) {
+        if (input.files && input.files[0]) {
+            processCheckoutFile(input.files[0]);
         }
-        window.location.href = url.toString();
+    }
+
+    function processCheckoutFile(file) {
+        const statusEl = document.getElementById('checkoutFileStatus');
+        statusEl.innerHTML = `<span class="text-info"><i class="bi bi-hourglass-split"></i> Memindai file ${file.name}...</span>`;
+
+        if (!checkoutHtml5Qr) {
+            checkoutHtml5Qr = new Html5Qrcode("checkout-qr-reader");
+        }
+
+        checkoutHtml5Qr.scanFile(file, true)
+            .then(code => {
+                statusEl.innerHTML = `<span class="text-success"><i class="bi bi-check-circle"></i> Berhasil scan: ${code}! Mengalihkan...</span>`;
+                window.location.href = `{{ route('checkout.index') }}?q=${encodeURIComponent(code)}`;
+            })
+            .catch(err => {
+                statusEl.innerHTML = `<span class="text-danger"><i class="bi bi-exclamation-triangle"></i> QR Code tidak terdeteksi pada gambar ini. Silakan coba gambar tiket yang lebih tajam.</span>`;
+            });
     }
 </script>
 @endpush

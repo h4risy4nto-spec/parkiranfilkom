@@ -50,8 +50,8 @@
                 </div>
             </div>
 
-            <div class="alert alert-warning py-2 small mb-0 border-0 text-start">
-                <i class="bi bi-info-circle me-1"></i> <strong>Perhatian:</strong> Simpan tiket ini baik-baik. Tunjukkan atau scan QR Code saat keluar gerbang. Denda tiket hilang berlaku sesuai ketentuan.
+            <div class="alert alert-info py-2 small mb-0 border-0 text-start" style="background: rgba(29, 112, 243, 0.1); color: #1d70f3;">
+                <i class="bi bi-info-circle me-1"></i> <strong>Perhatian:</strong> Simpan tiket ini baik-baik. Tunjukkan atau scan QR Code saat keluar gerbang di pos parkir FILKOM UB.
             </div>
         </div>
 

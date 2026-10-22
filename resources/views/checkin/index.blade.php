@@ -54,19 +54,19 @@
                     </label>
                     <div class="row g-3">
                         <div class="col-6">
-                            <label class="card-dark p-3 d-block text-center cursor-pointer border-secondary h-100" style="cursor: pointer;">
+                            <label class="ps-card p-3 d-block text-center cursor-pointer h-100" style="cursor: pointer;">
                                 <input type="radio" name="vehicle_type" value="Motor" class="form-check-input me-2" {{ old('vehicle_type', 'Motor') === 'Motor' ? 'checked' : '' }} onchange="filterAreas()">
-                                <i class="bi bi-bicycle fs-2 d-block my-1 text-warning"></i>
+                                <i class="bi bi-bicycle fs-2 d-block my-1 text-info"></i>
                                 <strong class="d-block text-white">Sepeda Motor</strong>
-                                <span class="text-muted small">Rp 2.000 / jam</span>
+                                <span class="badge bg-success bg-opacity-25 text-success small mt-1">Gratis</span>
                             </label>
                         </div>
                         <div class="col-6">
-                            <label class="card-dark p-3 d-block text-center cursor-pointer border-secondary h-100" style="cursor: pointer;">
+                            <label class="ps-card p-3 d-block text-center cursor-pointer h-100" style="cursor: pointer;">
                                 <input type="radio" name="vehicle_type" value="Mobil" class="form-check-input me-2" {{ old('vehicle_type') === 'Mobil' ? 'checked' : '' }} onchange="filterAreas()">
-                                <i class="bi bi-car-front-fill fs-2 d-block my-1 text-info"></i>
+                                <i class="bi bi-car-front-fill fs-2 d-block my-1 text-primary"></i>
                                 <strong class="d-block text-white">Mobil</strong>
-                                <span class="text-muted small">Rp 5.000 / jam</span>
+                                <span class="badge bg-success bg-opacity-25 text-success small mt-1">Gratis</span>
                             </label>
                         </div>
                     </div>

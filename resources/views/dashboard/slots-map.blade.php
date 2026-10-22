@@ -3,28 +3,30 @@
 @section('title', 'Peta Slot Parkir Visual - FILKOM UB')
 
 @section('content')
-<div class="row align-items-center mb-4">
-    <div class="col-md-8">
-        <h2 class="fw-bold mb-1 d-flex align-items-center gap-2">
-            <span>Denah & Peta Slot Parkir Visual</span>
-            <span class="badge badge-orange small fs-6">Layout Interaktif</span>
-        </h2>
-        <p class="text-muted mb-0">Lihat lokasi fisik dan status keterisian setiap nomor slot parkir di area FILKOM.</p>
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+    <div class="d-flex align-items-center gap-3">
+        <div class="stat-icon-wrapper stat-icon-blue" style="width: 42px; height: 42px; border-radius: 10px;">
+            <i class="bi bi-grid-3x3-gap-fill"></i>
+        </div>
+        <div>
+            <h2 class="page-title mb-1" style="font-size: 1.55rem;">Peta Slot Parkir Visual</h2>
+            <p class="page-subtitle">Lihat lokasi fisik dan status keterisian setiap nomor slot parkir di area FILKOM.</p>
+        </div>
     </div>
-    <div class="col-md-4 text-md-end mt-3 mt-md-0">
-        <a href="{{ route('dashboard') }}" class="btn btn-outline-custom">
+    <div>
+        <a href="{{ route('dashboard') }}" class="btn btn-ps-outline btn-sm">
             <i class="bi bi-arrow-left me-1"></i> Kembali ke Dashboard
         </a>
     </div>
 </div>
 
 <!-- Area Selector Tabs -->
-<div class="card-dark p-3 mb-4">
+<div class="ps-card p-3 mb-4">
     <div class="d-flex flex-wrap gap-2 align-items-center">
-        <span class="text-muted small fw-semibold me-2"><i class="bi bi-funnel text-warning"></i> Pilih Area:</span>
+        <span class="text-muted small fw-semibold me-2"><i class="bi bi-funnel text-primary"></i> Pilih Area:</span>
         @foreach($areas as $area)
             <a href="{{ route('dashboard.slots', ['area_id' => $area->id]) }}" 
-               class="btn {{ ($selectedArea && $selectedArea->id === $area->id) ? 'btn-neon-green' : 'btn-outline-custom' }} btn-sm px-3">
+               class="btn {{ ($selectedArea && $selectedArea->id === $area->id) ? 'btn-ps-primary' : 'btn-ps-outline' }} btn-sm px-3">
                 <i class="bi {{ $area->vehicle_type === 'Motor' ? 'bi-bicycle' : 'bi-car-front-fill' }} me-1"></i>
                 {{ $area->name }} ({{ $area->available_count }} kosong)
             </a>
@@ -33,7 +35,7 @@
 </div>
 
 @if($selectedArea)
-<div class="card-dark p-4 mb-4">
+<div class="ps-card p-4 mb-4">
     <div class="d-flex flex-wrap justify-content-between align-items-center pb-3 mb-4 border-bottom border-secondary">
         <div>
             <h4 class="fw-bold text-white mb-1">{{ $selectedArea->name }} ({{ $selectedArea->code }})</h4>

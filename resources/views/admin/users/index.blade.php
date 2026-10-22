@@ -3,24 +3,26 @@
 @section('title', 'Kelola Pengguna Sistem - Admin FILKOM')
 
 @section('content')
-<div class="row align-items-center mb-4">
-    <div class="col-md-8">
-        <h2 class="fw-bold mb-1 d-flex align-items-center gap-2">
-            <span>Manajemen Pengguna & Hak Akses</span>
-            <span class="badge badge-orange small fs-6">Admin</span>
-        </h2>
-        <p class="text-muted mb-0">Kelola akun administrator dan operator gerbang parkir Fakultas Ilmu Komputer.</p>
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+    <div class="d-flex align-items-center gap-3">
+        <div class="stat-icon-wrapper stat-icon-blue" style="width: 42px; height: 42px; border-radius: 10px;">
+            <i class="bi bi-people-fill"></i>
+        </div>
+        <div>
+            <h2 class="page-title mb-1" style="font-size: 1.55rem;">Kelola Pengguna Sistem</h2>
+            <p class="page-subtitle">Kelola akun administrator dan operator gerbang parkir Fakultas Ilmu Komputer.</p>
+        </div>
     </div>
-    <div class="col-md-4 text-md-end mt-3 mt-md-0">
-        <button type="button" class="btn btn-neon-green" data-bs-toggle="modal" data-bs-target="#addUserModal">
+    <div>
+        <button type="button" class="btn btn-ps-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addUserModal">
             <i class="bi bi-person-plus-fill me-1"></i> Tambah Pengguna Baru
         </button>
     </div>
 </div>
 
-<div class="card-dark overflow-hidden mb-4">
+<div class="ps-card p-0 overflow-hidden mb-4">
     <div class="table-responsive">
-        <table class="table table-dark-custom">
+        <table class="ps-table">
             <thead>
                 <tr>
                     <th>Nama Lengkap</th>

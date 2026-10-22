@@ -56,14 +56,13 @@ class AdminTicketController extends Controller
 
         $now = Carbon::now();
         $diffMinutes = max(1, $ticket->entry_time->diffInMinutes($now));
-        $feeInfo = ParkingRate::calculateFee($ticket->vehicle_type, $diffMinutes, false);
 
-        DB::transaction(function () use ($ticket, $now, $diffMinutes, $feeInfo) {
+        DB::transaction(function () use ($ticket, $now, $diffMinutes) {
             $ticket->update([
                 'exit_time' => $now,
                 'duration_minutes' => $diffMinutes,
-                'hourly_rate' => $feeInfo['hourly_rate'],
-                'total_amount' => $feeInfo['total_fee'],
+                'hourly_rate' => 0,
+                'total_amount' => 0,
                 'status' => 'paid',
                 'operator_out_id' => Auth::id(),
                 'notes' => 'Keluar paksa oleh Administrator',

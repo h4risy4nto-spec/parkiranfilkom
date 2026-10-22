@@ -46,18 +46,8 @@
                     <strong class="text-primary">{{ $ticket->formatted_duration }}</strong>
                 </div>
                 <div class="d-flex justify-content-between py-1">
-                    <span class="text-muted">Tarif:</span>
-                    <span class="text-dark">Rp {{ number_format($ticket->hourly_rate, 0, ',', '.') }} / jam</span>
-                </div>
-                @if($ticket->status === 'lost')
-                <div class="d-flex justify-content-between py-1 text-danger">
-                    <span>Keterangan:</span>
-                    <strong>Denda Tiket Hilang</strong>
-                </div>
-                @endif
-                <div class="d-flex justify-content-between pt-2 border-top mt-1 align-items-center">
-                    <strong class="text-dark fs-6">TOTAL DIBAYAR:</strong>
-                    <strong class="text-dark fs-4 font-monospace">Rp {{ number_format($ticket->total_amount, 0, ',', '.') }}</strong>
+                    <span class="text-muted">Status Parkir:</span>
+                    <strong class="text-success"><i class="bi bi-check-circle-fill me-1"></i> Selesai (Gratis / Bebas Biaya)</strong>
                 </div>
             </div>
 

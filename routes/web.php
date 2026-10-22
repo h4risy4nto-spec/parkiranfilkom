@@ -2,7 +2,7 @@
 
 use App\Http\Controllers\Admin\AdminAreaController;
 use App\Http\Controllers\Admin\AdminHistoryController;
-use App\Http\Controllers\Admin\AdminRateController;
+use App\Http\Controllers\Admin\AdminSettingController;
 use App\Http\Controllers\Admin\AdminTicketController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Auth\AuthController;
@@ -31,6 +31,13 @@ Route::post('/api/checkout/lookup', [CheckOutController::class, 'lookup'])->name
 Route::post('/checkout/process', [CheckOutController::class, 'process'])->name('checkout.process');
 Route::get('/checkout/receipt/{code}', [CheckOutController::class, 'receipt'])->name('checkout.receipt');
 
+// Aliases for modern navigation
+Route::get('/kendaraan', [AdminTicketController::class, 'activeTickets'])->name('kendaraan');
+Route::get('/laporan', [AdminHistoryController::class, 'index'])->name('laporan');
+Route::get('/riwayat', [AdminHistoryController::class, 'index'])->name('riwayat');
+Route::get('/kelola-parkir', [AdminAreaController::class, 'index'])->name('kelola-parkir');
+Route::get('/pengaturan', [AdminSettingController::class, 'index'])->name('pengaturan');
+
 // Authentication Routes
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -55,9 +62,12 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/history', [AdminHistoryController::class, 'index'])->name('history.index');
     Route::get('/history/report', [AdminHistoryController::class, 'report'])->name('history.report');
 
-    // Kelola Tarif Parkir
-    Route::get('/rates', [AdminRateController::class, 'index'])->name('rates.index');
-    Route::post('/rates', [AdminRateController::class, 'update'])->name('rates.update');
+    // Pengaturan Sistem
+    Route::get('/settings', [AdminSettingController::class, 'index'])->name('settings.index');
+    Route::post('/settings', [AdminSettingController::class, 'update'])->name('settings.update');
+
+    // Tarif dialihkan ke pengaturan (fitur harga dibuang sesuai instruksi)
+    Route::get('/rates', fn() => redirect()->route('admin.settings.index'))->name('rates.index');
 
     // Kelola Pengguna (Admin & Operator)
     Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');

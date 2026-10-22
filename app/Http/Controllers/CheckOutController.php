@@ -76,7 +76,6 @@ class CheckOutController extends Controller
 
         $now = Carbon::now();
         $durationMinutes = max(1, $ticket->entry_time->diffInMinutes($now));
-        $feeDetails = ParkingRate::calculateFee($ticket->vehicle_type, $durationMinutes, false);
 
         return response()->json([
             'success' => true,
@@ -89,18 +88,12 @@ class CheckOutController extends Controller
                 'entry_time' => $ticket->entry_time->translatedFormat('d M Y, H:i'),
                 'exit_time' => $now->translatedFormat('d M Y, H:i'),
                 'duration' => $ticket->formatted_duration,
-                'hours' => $feeDetails['hours'],
-                'hourly_rate' => $feeDetails['hourly_rate'],
-                'base_fee' => $feeDetails['base_fee'],
-                'penalty' => $feeDetails['penalty'],
-                'total_fee' => $feeDetails['total_fee'],
-                'formatted_fee' => 'Rp ' . number_format($feeDetails['total_fee'], 0, ',', '.'),
             ],
         ]);
     }
 
     /**
-     * Process checkout and payment with DB transaction
+     * Process checkout without billing (campus free parking)
      */
     public function process(Request $request)
     {
@@ -130,17 +123,16 @@ class CheckOutController extends Controller
 
                 $now = Carbon::now();
                 $diffMinutes = max(1, $ticket->entry_time->diffInMinutes($now));
-                $feeInfo = ParkingRate::calculateFee($ticket->vehicle_type, $diffMinutes, $isLost);
 
-                // Update status tiket
+                // Update status tiket (Free parking - no monetary charge)
                 $ticket->update([
                     'exit_time' => $now,
                     'duration_minutes' => $diffMinutes,
-                    'hourly_rate' => $feeInfo['hourly_rate'],
-                    'total_amount' => $feeInfo['total_fee'],
+                    'hourly_rate' => 0,
+                    'total_amount' => 0,
                     'status' => $isLost ? 'lost' : 'paid',
                     'operator_out_id' => Auth::id(),
-                    'notes' => $notes ?: ($isLost ? 'Tiket Hilang (Denda diterapkan)' : null),
+                    'notes' => $notes ?: ($isLost ? 'Tiket Hilang (Diverifikasi Operator)' : null),
                 ]);
 
                 // Kosongkan kembali slot parkir terkait
@@ -155,7 +147,7 @@ class CheckOutController extends Controller
             });
 
             return redirect()->route('checkout.receipt', $ticket->ticket_code)
-                ->with('success', "Kendaraan {$ticket->plate_number} berhasil keluar! Total Biaya: Rp " . number_format($ticket->total_amount, 0, ',', '.') . ". Slot telah dikosongkan kembali.");
+                ->with('success', "Kendaraan {$ticket->plate_number} berhasil keluar! Durasi: {$ticket->formatted_duration}. Slot telah dikosongkan kembali.");
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
         }
