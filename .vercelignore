@@ -1,0 +1,7 @@
+.env
+.env.*
+cloudflared.exe
+tests/
+phpunit.xml
+/node_modules
+/legacy
